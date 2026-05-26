@@ -1,4 +1,31 @@
+# PlatformIO
 .pio/
+.pioenvs/
+.piolibdeps/
+
+# IDE / editor
 .vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+.cache/
+
+# OS
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Local overrides
+platformio.local.ini
+*.local
+
+# Vendor docs (large binaries, datasheets)
+docs/Freenove_ESP32_S3_ FNK010B/
+
+# Build / runtime artifacts (filesystem image src, OTA images, captures)
 data/
+*.bin
+*.elf
+*.hex
+*.log
