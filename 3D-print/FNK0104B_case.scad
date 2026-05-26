@@ -4,10 +4,11 @@
 // Export with:
 //   openscad -D 'part="main"' -o build/FNK0104B-main-case.stl FNK0104B_case.scad
 //   openscad -D 'part="lid"'  -o build/FNK0104B-lid.stl       FNK0104B_case.scad
+//   openscad -D 'part="snap-fit-lid"' -o build/FNK0104B-snap-fit-lid.stl FNK0104B_case.scad
 
 $fn = 64;
 
-part = "assembly"; // "main", "lid", "assembly"
+part = "assembly"; // "main", "lid", "snap-fit-lid", "assembly"
 
 // Overall enclosure
 case_depth = 35;          // outside depth when the lid is installed
@@ -77,13 +78,15 @@ board_hole_d = 3.0;
 board_hole_x = 39.25;
 board_hole_y = 21.0;
 board_post_d = 6.2;
-board_screw_pilot_d = 2.1; // M2/M2.2 self-tap pilot; enlarge for heat-set inserts
+board_insert_hole_d = 3.1;
+board_insert_depth = 3.0;
 board_screw_pilot_front_skin = 0.8;
 
 // Lid screws use separate bosses just outside the board footprint.
 lid_screw_d = 2.7;         // clearance hole in lid for M2.5 screws
-lid_pilot_d = 2.1;         // pilot in main case boss
 lid_boss_d = 6.4;
+lid_insert_hole_d = board_insert_hole_d;
+lid_insert_depth = board_insert_depth;
 lid_screw_margin = 5.6;    // from outside edge to lid screw center
 counterbore_d = 5.2;
 counterbore_depth = 1.2;
@@ -161,8 +164,8 @@ module board_posts() {
                 cylinder(d = board_post_d, h = display_front_to_board_mount);
                 translate([0, 0, board_screw_pilot_front_skin])
                     cylinder(
-                        d = board_screw_pilot_d,
-                        h = display_front_to_board_mount - board_screw_pilot_front_skin + 0.2
+                        d = board_insert_hole_d,
+                        h = board_insert_depth + 0.2
                     );
             }
         }
@@ -173,8 +176,8 @@ module lid_bosses() {
     at_corners(lid_screw_x, lid_screw_y) {
         difference() {
             cylinder(d = lid_boss_d, h = main_depth);
-            translate([0, 0, front_wall])
-                cylinder(d = lid_pilot_d, h = main_depth);
+            translate([0, 0, main_depth - lid_insert_depth])
+                cylinder(d = lid_insert_hole_d, h = lid_insert_depth + 0.2);
         }
     }
 }
@@ -355,6 +358,24 @@ module lid_usb_edge_opening() {
         ], center = true);
 }
 
+module lid_usb_channel_rim_cutout() {
+    board_left_x = board_center_x - board_w / 2;
+    x_min = -outer_w / 2 - 0.2;
+    x_max = board_left_x + 0.2;
+    channel_w = usb_cutout_w + usb_channel_clearance + 2 * usb_channel_wall_thickness;
+
+    translate([
+        (x_min + x_max) / 2,
+        usb_cutout_y,
+        -lid_lip_depth / 2
+    ])
+        cube([
+            x_max - x_min,
+            channel_w + 0.2,
+            lid_lip_depth + 0.2
+        ], center = true);
+}
+
 module long_edge_clearance() {
     pocket_depth = wall - long_edge_remaining_wall + long_edge_overlap;
     pocket_y = inner_h / 2 - long_edge_overlap + pocket_depth / 2;
@@ -385,7 +406,7 @@ module main_case() {
     }
 }
 
-module lid_raw() {
+module lid_raw(include_screw_holes = true) {
     union() {
         difference() {
             union() {
@@ -414,22 +435,25 @@ module lid_raw() {
                 translate([0, 0, -lid_lip_depth - 0.1])
                     cylinder(d = lid_boss_d + 0.8, h = lid_lip_depth + 0.2);
 
-                translate([0, 0, -lid_lip_depth - 0.1])
-                    cylinder(d = lid_screw_d, h = lid_thickness + lid_lip_depth + 0.2);
+                if (include_screw_holes) {
+                    translate([0, 0, -lid_lip_depth - 0.1])
+                        cylinder(d = lid_screw_d, h = lid_thickness + lid_lip_depth + 0.2);
 
-                translate([0, 0, lid_thickness - counterbore_depth])
-                    cylinder(d = counterbore_d, h = counterbore_depth + 0.1);
+                    translate([0, 0, lid_thickness - counterbore_depth])
+                        cylinder(d = counterbore_d, h = counterbore_depth + 0.1);
+                }
             }
 
             lid_usb_hole();
             lid_usb_edge_opening();
+            lid_usb_channel_rim_cutout();
         }
     }
 }
 
-module lid_for_print() {
+module lid_for_print(include_screw_holes = true) {
     translate([0, 0, lid_lip_depth])
-        lid_raw();
+        lid_raw(include_screw_holes);
 }
 
 module board_reference() {
@@ -469,6 +493,8 @@ if (part == "main") {
     main_case();
 } else if (part == "lid") {
     lid_for_print();
+} else if (part == "snap-fit-lid") {
+    lid_for_print(false);
 } else {
     assembly();
 }

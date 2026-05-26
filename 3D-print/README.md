@@ -5,6 +5,7 @@ OpenSCAD model for a two-part 25 mm deep case:
 - `FNK0104B_case.scad` - parametric source
 - `build/FNK0104B-main-case.stl` - main case with LCD window
 - `build/FNK0104B-lid.stl` - screw-on lid
+- `build/FNK0104B-snap-fit-lid.stl` - lid variant without screw holes
 - `build/FNK0104B-assembly-preview.png` - quick preview render
 
 ## Assumptions
@@ -43,4 +44,5 @@ Before a final print, check these against the actual board and update the named 
 ```sh
 openscad -D 'part="main"' -o build/FNK0104B-main-case.stl FNK0104B_case.scad
 openscad -D 'part="lid"'  -o build/FNK0104B-lid.stl       FNK0104B_case.scad
+openscad -D 'part="snap-fit-lid"' -o build/FNK0104B-snap-fit-lid.stl FNK0104B_case.scad
 ```
