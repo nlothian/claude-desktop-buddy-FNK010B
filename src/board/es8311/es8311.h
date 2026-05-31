@@ -230,6 +230,17 @@ es8311_handle_t es8311_create(const i2c_port_t port, const uint16_t dev_addr);
  */
 void es8311_delete(es8311_handle_t dev);
 esp_err_t es8311_codec_init(void);
+
+/**
+ * @brief Set the output (DAC) volume on the codec initialised by
+ *        es8311_codec_init(). This is real hardware attenuation ahead of the
+ *        speaker amp, so it actually changes loudness (unlike scaling the
+ *        digital sample amplitude, which the amp just clips back to the rails).
+ *
+ * @param[in] volume 0..100 (0 = mute)
+ * @return ESP_OK on success, ESP_FAIL if the codec was never initialised.
+ */
+esp_err_t es8311_codec_set_volume(int volume);
 #ifdef __cplusplus
 }
 #endif

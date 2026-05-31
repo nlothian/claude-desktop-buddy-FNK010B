@@ -139,13 +139,21 @@ uint32_t blePasskey() { return passkey; }
 
 void bleClearBonds() {
   int n = esp_ble_get_bond_device_num();
-  if (n <= 0) return;
-  esp_ble_bond_dev_t* list = (esp_ble_bond_dev_t*)malloc(n * sizeof(esp_ble_bond_dev_t));
-  if (!list) return;
-  esp_ble_get_bond_device_list(&n, list);
-  for (int i = 0; i < n; i++) esp_ble_remove_bond_device(list[i].bd_addr);
-  free(list);
-  Serial.printf("[ble] cleared %d bond(s)\n", n);
+  if (n > 0) {
+    esp_ble_bond_dev_t* list = (esp_ble_bond_dev_t*)malloc(n * sizeof(esp_ble_bond_dev_t));
+    if (list) {
+      esp_ble_get_bond_device_list(&n, list);
+      for (int i = 0; i < n; i++) esp_ble_remove_bond_device(list[i].bd_addr);
+      free(list);
+      Serial.printf("[ble] cleared %d bond(s)\n", n);
+    }
+  }
+  // Drop the active link too. Otherwise the peer still holds the key we just
+  // deleted: it reconnects, tries to encrypt with a dead LTK, and we sit in a
+  // half-open link (connected=true) that never re-advertises — unpairable.
+  // onDisconnect() resets connected/secure and restarts advertising, leaving
+  // us cleanly discoverable for a fresh passkey pairing.
+  if (connected && server) server->disconnect(server->getConnId());
 }
 
 size_t bleAvailable() {

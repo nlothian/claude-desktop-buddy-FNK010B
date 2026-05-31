@@ -141,6 +141,12 @@ static const struct _coeff_div coeff_div[] = {
 
 static const char *TAG = "ES8311";
 
+// Retained from es8311_codec_init() so the output (DAC) volume can be changed
+// at runtime — the FNK010B drives the speaker amp hard, so a clean square wave
+// always clips to the rails. Real loudness control has to come from attenuating
+// in the codec before the amp, not from scaling the digital sample amplitude.
+static es8311_handle_t s_es_handle = NULL;
+
 static inline esp_err_t es8311_write_reg(es8311_handle_t dev, uint8_t reg_addr, uint8_t data)
 {
     es8311_dev_t *es = (es8311_dev_t *) dev;
@@ -445,6 +451,7 @@ esp_err_t es8311_codec_init(void)
     /* Initialize es8311 codec */
     es8311_handle_t es_handle = es8311_create(I2C_NUM_0, ES8311_ADDRRES_0);
     ESP_RETURN_ON_FALSE(es_handle, ESP_FAIL, TAG, "es8311 create failed");
+    s_es_handle = es_handle;   // keep for runtime es8311_codec_set_volume()
     const es8311_clock_config_t es_clk = {
         .mclk_inverted = false,
         .sclk_inverted = false,
@@ -459,4 +466,10 @@ esp_err_t es8311_codec_init(void)
     ESP_RETURN_ON_ERROR(es8311_microphone_config(es_handle, false), TAG, "set es8311 microphone failed");
     // ESP_RETURN_ON_ERROR(es8311_microphone_gain_set(es_handle, ES8311_MIC_GAIN_24DB), TAG, "set es8311 microphone gain failed");
     return ESP_OK;
+}
+
+esp_err_t es8311_codec_set_volume(int volume)
+{
+    if (!s_es_handle) return ESP_FAIL;
+    return es8311_voice_volume_set(s_es_handle, volume, NULL);
 }

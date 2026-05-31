@@ -55,6 +55,13 @@ bool touch_event(TouchEvent& out) {
   return true;
 }
 
+bool touch_active(int16_t& x, int16_t& y) {
+  if (_state == S_IDLE) return false;   // S_DOWN or S_LONG_FIRED == finger down
+  x = _xLast;
+  y = _yLast;
+  return true;
+}
+
 void touch_begin() {
   ft.begin();
 }

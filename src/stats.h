@@ -183,9 +183,10 @@ struct Settings {
   bool led;
   bool hud;
   uint8_t clockRot;  // 0=auto 1=portrait 2=landscape
+  uint8_t volume;    // beep volume 0..100 (scales square-wave amplitude)
 };
 
-static Settings _settings = { true, true, false, true, true, 0 };
+static Settings _settings = { true, true, false, true, true, 0, 40 };
 
 inline void settingsLoad() {
   _prefs.begin("buddy", true);
@@ -196,6 +197,8 @@ inline void settingsLoad() {
   _settings.hud      = _prefs.getBool("s_hud", true);
   _settings.clockRot = _prefs.getUChar("s_crot", 0);
   if (_settings.clockRot > 2) _settings.clockRot = 0;
+  _settings.volume   = _prefs.getUChar("s_vol", 40);
+  if (_settings.volume > 100) _settings.volume = 100;
   _prefs.end();
 }
 
@@ -207,6 +210,7 @@ inline void settingsSave() {
   _prefs.putBool("s_led", _settings.led);
   _prefs.putBool("s_hud", _settings.hud);
   _prefs.putUChar("s_crot", _settings.clockRot);
+  _prefs.putUChar("s_vol", _settings.volume);
   _prefs.end();
 }
 
@@ -260,6 +264,33 @@ inline uint8_t speciesIdxLoad() {
 inline void speciesIdxSave(uint8_t idx) {
   _prefs.begin("buddy", false);
   _prefs.putUChar("species", idx);
+  _prefs.end();
+}
+
+// BLE identity salt. startBt() XORs this into the base MAC's low byte, so 0
+// keeps the factory Bluetooth address (bonds survive normal reboots) and the
+// Re-pair action bumps it to present a brand-new device — the reliable escape
+// when a host holds a stale bond it won't evict.
+inline uint8_t pairSaltLoad() {
+  _prefs.begin("buddy", true);
+  uint8_t v = _prefs.getUChar("btsalt", 0);
+  _prefs.end();
+  return v;
+}
+
+inline void pairSaltSave(uint8_t v) {
+  _prefs.begin("buddy", false);
+  _prefs.putUChar("btsalt", v);
+  _prefs.end();
+}
+
+// Erase every key in the NVS "buddy" namespace — settings, stats, pet/owner
+// names, species and the pairing salt. With the salt gone it reloads as 0, so
+// the next boot re-derives the factory Bluetooth name (Claude-XXXX from the
+// eFuse MAC). Backs the settings Reset tile.
+inline void userDataErase() {
+  _prefs.begin("buddy", false);
+  _prefs.clear();
   _prefs.end();
 }
 

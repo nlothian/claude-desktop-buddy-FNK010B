@@ -24,4 +24,10 @@ struct TouchEvent {
 // that haven't been migrated yet (top-half = BtnA, bottom-half = BtnB).
 bool touch_event(TouchEvent& out);
 
+// True while a finger is currently in contact, filling x/y with the latest
+// canvas position. Where touch_event() reports completed gestures, this exposes
+// the live contact for direct-manipulation controls (e.g. dragging the volume
+// slider). Leaves x/y untouched and returns false when no finger is down.
+bool touch_active(int16_t& x, int16_t& y);
+
 }  // namespace fnk

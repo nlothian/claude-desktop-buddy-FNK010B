@@ -77,6 +77,8 @@ public:
   void tone(uint16_t freq, uint16_t dur_ms);
   void update();
   void mute();
+  void volume(uint8_t pct);  // 0..100 — sets codec output attenuation (not sample amplitude)
+  void amp(bool on);   // gate the speaker power amp — call amp(false) on sleep
 };
 
 class ImuShim {

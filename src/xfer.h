@@ -97,8 +97,10 @@ inline bool xferCommand(JsonDocument& doc) {
   }
 
   if (strcmp(cmd, "unpair") == 0) {
-    bleClearBonds();
+    // Ack first: bleClearBonds() drops the active link, so send the reply
+    // while it's still up and encrypted.
     _xAck("unpair", true);
+    bleClearBonds();
     return true;
   }
 
